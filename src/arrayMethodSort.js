@@ -4,7 +4,9 @@
  * Implement method Sort
  */
 function applyCustomSort() {
-  [].__proto__.sort2 = function (compareFunction) {
+  const proto = Object.getPrototypeOf([]);
+
+  function customSort(compareFunction) {
     if (
       compareFunction !== undefined &&
       typeof compareFunction !== 'function'
@@ -16,44 +18,49 @@ function applyCustomSort() {
 
     const compare =
       compareFunction ||
-      ((a, b) => {
-        const s1 = String(a);
-        const s2 = String(b);
+      function (a, b) {
+        const A = String(a);
+        const B = String(b);
 
-        if (s1 < s2) {
-          return -1;
-        }
-
-        if (s1 > s2) {
+        if (A > B) {
           return 1;
         }
 
-        return 0;
-      });
-
-    const length = this.length;
-
-    for (let i = 0; i < length; i++) {
-      let swapped = false;
-
-      for (let j = 0; j < length - 1 - i; j++) {
-        if (compare(this[j], this[j + 1]) > 0) {
-          [this[j], this[j + 1]] = [this[j + 1], this[j]];
-          swapped = true;
+        if (A < B) {
+          return -1;
         }
+
+        return 0;
+      };
+
+    for (let i = 1; i < this.length; i++) {
+      const current = this[i];
+      let j = i - 1;
+
+      while (j >= 0 && compare(this[j], current) > 0) {
+        this[j + 1] = this[j];
+        j--;
       }
 
-      if (!swapped) {
-        break;
-      }
+      this[j + 1] = current;
     }
 
     return this;
-  };
+  }
 
-  [].__proto__.sort = function (compareFunction) {
-    return this.sort2(compareFunction);
-  };
+  Object.defineProperty(proto, 'sort2', {
+    value: customSort,
+    writable: true,
+    configurable: true,
+  });
+
+  Object.defineProperty(proto, 'sort', {
+    value: function (compareFunction) {
+      return customSort.call(this, compareFunction);
+    },
+    writable: true,
+    configurable: true,
+  });
 }
 
 module.exports = applyCustomSort;
